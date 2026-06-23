@@ -1,12 +1,11 @@
 import './Button.css';
-function Button() {
-  function handleClick() {
-    alert('обработать действие!');
-  }
+
+function Button({ onClick }) {
   return (
-    <button className="my-button" onClick={handleClick}>
-      Не знаю зачем
+    <button className="my-button" onClick={onClick}>
+      Предыдущий скан
     </button>
   );
 }
+
 export default Button;

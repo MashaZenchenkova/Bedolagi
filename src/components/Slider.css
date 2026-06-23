@@ -1,14 +1,15 @@
 .slider-widget {
+  position: absolute;
+  top: 30px;
+  left: 1025px;
   background: #151922;
   border: 1px solid #2a2f3a;
   border-radius: 14px;
   padding: 20px 24px;
   min-width: 280px;
-  width: 100%;               /* ← Растягиваем на всю ширину */
-  max-width: 550px;          /* ← Ограничиваем ширину (как прямоугольник) */
+  width: 100%;
+  max-width: 550px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  margin-left: 955px;
-  margin-top: -150px;
 }
 
 .slider-header {
@@ -17,7 +18,6 @@
   align-items: center;
   margin-bottom: 12px;
 }
-
 
 .slider-label {
   font-size: 18px;
