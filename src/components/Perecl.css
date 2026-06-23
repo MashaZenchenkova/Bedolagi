@@ -1,20 +1,24 @@
 .checkbox-label {
+  position: absolute;
+  top: 50px;
+  left: 595px;
   display: inline-block;
   font-size: 40px;
   color: #fff;
   cursor: pointer;
-  margin-left: 163px;
   padding: 20px;
   background-color: #0765a0;
   border-radius: 25px;
   box-shadow: 0 4px 12px #0765a0;
   transition: all 0.2s ease;
 }
+
 .checkbox-label:hover {
   background-color: #0a7bc4;
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 6px 20px #0765a0;
 }
+
 .my-checkbox {
   width: 30px;
   height: 30px;
@@ -23,6 +27,7 @@
   accent-color: #00ff99;
   transform: scale(1.2);
 }
+
 .my-checkbox:checked {
   accent-color: #00ff99;
 }
