@@ -1,138 +1,133 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react'
 
-const DEMO_POINTS_3D = [];
-for (let i = 0; i < 200; i++) {
-  DEMO_POINTS_3D.push({
-    x: (Math.random() - 0.5) * 4000,
-    y: (Math.random() - 0.5) * 4000,
-    z: Math.random() * 200 - 100
-  });
+const DEMO_POINTS = []
+for (let a = 0; a < 360; a += 1.5) {
+  const d = 1800 + Math.sin(a * Math.PI / 70) * 600 + Math.cos(a * Math.PI / 45) * 300 + (Math.random() - 0.5) * 200
+  const rad = a * Math.PI / 180
+  DEMO_POINTS.push({ x: Math.cos(rad) * d, y: Math.sin(rad) * d, distance: d })
 }
 
-function MapPanel3D({ points = DEMO_POINTS_3D }) {
-  const canvasRef = useRef(null);
-  const [rotation, setRotation] = useState({ x: 0.5, y: 0.5 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
+function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
+  const canvasRef = useRef(null)
+  const rotRef = useRef({ yaw: 0.6, pitch: 0.5 })
+  const dragRef = useRef(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
-    canvas.width = W;
-    canvas.height = H;
+    draw()
+  }, [points, scale])
 
-    const cx = W / 2;
-    const cy = H / 2;
-    const scale = 0.08;
+  function project(x, y, z) {
+    const { yaw, pitch } = rotRef.current
+    const x1 = x * Math.cos(yaw) - z * Math.sin(yaw)
+    const z1 = x * Math.sin(yaw) + z * Math.cos(yaw)
+    const y1 = y * Math.cos(pitch) - z1 * Math.sin(pitch)
+    const z2 = y * Math.sin(pitch) + z1 * Math.cos(pitch)
+    const cam = 1200
+    const p = cam / (cam - z2)
+    return { x: x1 * p, y: y1 * p, depth: z2 }
+  }
 
-    ctx.clearRect(0, 0, W, H);
+  function draw() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const W = canvas.offsetWidth
+    const H = canvas.offsetHeight
+    canvas.width = W
+    canvas.height = H
+    const cx = W / 2, cy = H / 2
 
-    // проекция 3D -> 2D
-    const project = (point) => {
-      const x = point.x * Math.cos(rotation.y) - point.z * Math.sin(rotation.y);
-      const z = point.x * Math.sin(rotation.y) + point.z * Math.cos(rotation.y);
-      const y = point.y * Math.cos(rotation.x) - z * Math.sin(rotation.x);
-      return {
-        x: cx + x * scale,
-        y: cy + y * scale,
-        z: z
-      };
-    };
+    ctx.clearRect(0, 0, W, H)
 
     // сетка
-    ctx.strokeStyle = '#111820';
-    ctx.lineWidth = 1;
-    for (let i = -2000; i <= 2000; i += 500) {
-      const p1 = project({ x: i, y: -2000, z: 0 });
-      const p2 = project({ x: i, y: 2000, z: 0 });
-      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-      
-      const p3 = project({ x: -2000, y: i, z: 0 });
-      const p4 = project({ x: 2000, y: i, z: 0 });
-      ctx.beginPath(); ctx.moveTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.stroke();
+    ctx.strokeStyle = '#111820'
+    ctx.lineWidth = 1
+    for (let g = -800; g <= 800; g += 60) {
+      const p1 = project(g, -800, 0), p2 = project(g, 800, 0)
+      ctx.beginPath(); ctx.moveTo(cx + p1.x, cy - p1.y); ctx.lineTo(cx + p2.x, cy - p2.y); ctx.stroke()
+      const p3 = project(-800, g, 0), p4 = project(800, g, 0)
+      ctx.beginPath(); ctx.moveTo(cx + p3.x, cy - p3.y); ctx.lineTo(cx + p4.x, cy - p4.y); ctx.stroke()
     }
 
-    // точки
-    const projected = points.map(p => ({ ...p, proj: project(p) }));
-    projected.sort((a, b) => b.proj.z - a.proj.z);
+    // оси X Y Z
+    ;[
+      { to: project(250, 0, 0),  color: '#ff5566' },
+      { to: project(0, 250, 0),  color: '#55ff88' },
+      { to: project(0, 0, 250),  color: '#5599ff' },
+    ].forEach(a => {
+      ctx.strokeStyle = a.color; ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + a.to.x, cy - a.to.y); ctx.stroke()
+    })
 
-    projected.forEach(p => {
-      const brightness = Math.max(0.2, Math.min(1, (p.proj.z + 1000) / 2000));
-      ctx.fillStyle = `rgba(0, ${Math.round(255 * brightness)}, ${Math.round(153 * brightness)}, 0.8)`;
-      ctx.beginPath();
-      ctx.arc(p.proj.x, p.proj.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // оси
-    const origin = project({ x: 0, y: 0, z: 0 });
-    const xAxis = project({ x: 1000, y: 0, z: 0 });
-    const yAxis = project({ x: 0, y: 1000, z: 0 });
-    const zAxis = project({ x: 0, y: 0, z: 1000 });
-
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#ff4444';
-    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(xAxis.x, xAxis.y); ctx.stroke();
-    ctx.strokeStyle = '#44ff44';
-    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(yAxis.x, yAxis.y); ctx.stroke();
-    ctx.strokeStyle = '#4444ff';
-    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(zAxis.x, zAxis.y); ctx.stroke();
+    // точки лидара (Z=0, как в 2D)
+    if (points.length > 0) {
+      const projected = points.map(p => {
+        const pr = project(p.x * scale, p.y * scale, 0)
+        return { sx: cx + pr.x, sy: cy - pr.y, depth: pr.depth, dist: p.distance }
+      })
+      // дальние рисуем первыми
+      projected.sort((a, b) => a.depth - b.depth)
+      const maxD = Math.max(...points.map(p => p.distance))
+      projected.forEach(p => {
+        const t = p.dist / (maxD || 1)
+        const g = Math.round(120 + t * 135)
+        ctx.fillStyle = `rgb(0, ${g}, ${Math.round(g * 0.45)})`
+        ctx.beginPath(); ctx.arc(p.sx, p.sy, 2, 0, Math.PI * 2); ctx.fill()
+      })
+    }
 
     // робот
-    const robot = project({ x: 0, y: 0, z: 0 });
-    ctx.strokeStyle = '#ffcc00';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(robot.x, robot.y, 20, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = '#ffcc00';
-    ctx.beginPath();
-    ctx.arc(robot.x, robot.y, 5, 0, Math.PI * 2);
-    ctx.fill();
-  }, [points, rotation]);
+    const segs = 28
+    ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3
+    ctx.beginPath()
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2
+      const pr = project(Math.cos(a) * 22, Math.sin(a) * 22, 0)
+      i === 0 ? ctx.moveTo(cx + pr.x, cy - pr.y) : ctx.lineTo(cx + pr.x, cy - pr.y)
+    }
+    ctx.stroke()
+    const c0 = project(0, 0, 0)
+    ctx.fillStyle = '#ffcc00'
+    ctx.beginPath(); ctx.arc(cx + c0.x, cy - c0.y, 4, 0, Math.PI * 2); ctx.fill()
+    // мачта вверх по Z
+    const mast = project(0, 0, 80)
+    ctx.beginPath(); ctx.moveTo(cx + c0.x, cy - c0.y); ctx.lineTo(cx + mast.x, cy - mast.y); ctx.stroke()
+  }
 
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setLastPos({ x: e.clientX, y: e.clientY });
-  };
+  function onMouseDown(e) { dragRef.current = { x: e.clientX, y: e.clientY } }
 
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    const dx = e.clientX - lastPos.x;
-    const dy = e.clientY - lastPos.y;
-    setRotation(prev => ({
-      x: prev.x + dy * 0.01,
-      y: prev.y + dx * 0.01
-    }));
-    setLastPos({ x: e.clientX, y: e.clientY });
-  };
+  function onMouseMove(e) {
+    if (!dragRef.current) return
+    rotRef.current.yaw   += (e.clientX - dragRef.current.x) * 0.01
+    rotRef.current.pitch -= (e.clientY - dragRef.current.y) * 0.01
+    rotRef.current.pitch = Math.max(-1.4, Math.min(1.4, rotRef.current.pitch))
+    dragRef.current = { x: e.clientX, y: e.clientY }
+    draw()
+  }
 
-  const handleMouseUp = () => setIsDragging(false);
+  function onMouseUp() { dragRef.current = null }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ fontSize: 13, color: '#8d96a8', marginBottom: 8 }}>
-        3D карта · точек: {points.length} · перетащи для вращения
+        3D карта · точек: {points.length} · тяните для поворота
       </div>
       <canvas
         ref={canvasRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
         style={{
-          flex: 1,
-          width: '100%',
+          flex: 1, width: '100%',
           background: '#050608',
           border: '1px solid #303744',
           borderRadius: 10,
-          cursor: isDragging ? 'grabbing' : 'grab'
+          cursor: 'grab',
         }}
       />
     </div>
-  );
+  )
 }
 
-export default MapPanel3D;
+export default MapPanel3D
