@@ -1,7 +1,7 @@
 import React from 'react';
 import './Perecl.css';
 
-function Perecl({ isChecked = false, onChange }) {
+function Perecl2({ isChecked = false, onChange }) {
   return (
     <label className="checkbox-label">
       <input 
@@ -10,9 +10,9 @@ function Perecl({ isChecked = false, onChange }) {
         checked={isChecked}
         onChange={(e) => onChange(e.target.checked)}
       />
-      Включить 2D карту
+      Включить 3D карту
     </label>
   );
 }
 
-export default Perecl;
+export default Perecl2;
