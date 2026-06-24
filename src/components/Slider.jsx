@@ -1,19 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Slider.css';
 
-function Slider({ label = 'Slider', min = 0, max = 100, initialValue = 50 }) {
+function Slider({ label = 'Slider', min = 0, max = 100, initialValue = 50, onValueChange }) {
   const [value, setValue] = useState(initialValue);
 
   function handleChange(e) {
-    setValue(Number(e.target.value));
+    const newValue = Number(e.target.value);
+    setValue(newValue);
+    if (onValueChange) {
+      onValueChange(newValue);
+    }
   }
+
+  useEffect(() => {
+    const slider = document.querySelector('.slider-input');
+    if (slider) {
+      const progress = ((value - min) / (max - min)) * 100;
+      slider.style.setProperty('--progress', `${progress}%`);
+    }
+  }, [value, min, max]);
 
   return (
     <div className="slider-widget">
-      <div className="slider-header">
-        <span className="slider-label">{label}</span>
-        <span className="slider-value">{value}</span>
-      </div>
+      <span className="slider-label">{label}</span>
+      <span className="slider-value">{value}</span>
       <input
         type="range"
         className="slider-input"
@@ -22,10 +32,6 @@ function Slider({ label = 'Slider', min = 0, max = 100, initialValue = 50 }) {
         value={value}
         onChange={handleChange}
       />
-      <div className="slider-footer">
-        <span className="slider-min">{min}</span>
-        <span className="slider-max">{max}</span>
-      </div>
     </div>
   );
 }
