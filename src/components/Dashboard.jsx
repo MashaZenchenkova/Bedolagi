@@ -3,10 +3,10 @@ import Widget from './Widget'
 import './Dashboard.css'
 
 const CARD_TYPES = [
-  { type: 'value', label: 'Телеметрия', icon: '📊' },
+  { type: 'value',       label: 'Телеметрия',    icon: '📊' },
   { type: 'scanCounter', label: 'Счетчик сканов', icon: '🔢' },
-  { type: 'lidar2d', label: 'Карта 2D', icon: '🗺️' },
-  { type: 'lidar3d', label: 'Карта 3D', icon: '🌐' },
+  { type: 'lidar2d',     label: 'Карта 2D',       icon: '🗺️' },
+  { type: 'lidar3d',     label: 'Карта 3D',       icon: '🗺️' },
 ]
 
 function AddCardModal({ onAdd, onClose, existingCards }) {
@@ -25,16 +25,7 @@ function AddCardModal({ onAdd, onClose, existingCards }) {
   function handleAdd() {
     const typeInfo = CARD_TYPES.find(t => t.type === type)
     const label = typeInfo ? typeInfo.label : type
-
-    onAdd({
-      id: Date.now(),
-      type,
-      label,
-      x: 0,
-      y: 0,
-      width: 300,
-      height: 250,
-    })
+    onAdd({ id: Date.now(), type, label, x: 0, y: 0, width: 300, height: 250 })
     onClose()
   }
 
@@ -43,13 +34,9 @@ function AddCardModal({ onAdd, onClose, existingCards }) {
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal" onClick={e => e.stopPropagation()}>
           <h3>Добавить карточку</h3>
-          <div className="empty-modal">
-            <p>Все типы карточек уже добавлены</p>
-          </div>
+          <div className="empty-modal"><p>Все типы карточек уже добавлены</p></div>
           <div className="modal-buttons">
-            <button className="modal-btn-cancel" onClick={onClose}>
-              Закрыть
-            </button>
+            <button className="modal-btn-cancel" onClick={onClose}>Закрыть</button>
           </div>
         </div>
       </div>
@@ -59,7 +46,7 @@ function AddCardModal({ onAdd, onClose, existingCards }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h3>Добавить карточку</h3>
+        <h3 style={{ textAlign: 'center' }}>Добавить карточку</h3>
         <div className="card-type-grid">
           {availableTypes.map(t => (
             <div
@@ -72,13 +59,9 @@ function AddCardModal({ onAdd, onClose, existingCards }) {
             </div>
           ))}
         </div>
-        <div className="modal-buttons">
-          <button className="modal-btn-cancel" onClick={onClose}>
-            Отмена
-          </button>
-          <button className="modal-btn-add" onClick={handleAdd}>
-            Добавить
-          </button>
+        <div className="modal-buttons" style={{ justifyContent: 'center' }}>
+          <button className="modal-btn-cancel" onClick={onClose}>Отмена</button>
+          <button className="modal-btn-add" onClick={handleAdd}>Добавить</button>
         </div>
       </div>
     </div>
@@ -86,12 +69,12 @@ function AddCardModal({ onAdd, onClose, existingCards }) {
 }
 
 export default function Dashboard() {
-  const [cards, setCards] = useState([])
-  const [editMode, setEditMode] = useState(false)
+  const [cards, setCards]         = useState([])
+  const [editMode, setEditMode]   = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [draggingId, setDraggingId] = useState(null)
   const [resizingId, setResizingId] = useState(null)
-  const dragStart = useRef({ x: 0, y: 0, cardX: 0, cardY: 0 })
+  const dragStart   = useRef({ x: 0, y: 0, cardX: 0, cardY: 0 })
   const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0 })
 
   function addCard(card) {
@@ -111,12 +94,7 @@ export default function Dashboard() {
     if (!editMode) return
     e.preventDefault()
     setDraggingId(card.id)
-    dragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      cardX: card.x,
-      cardY: card.y,
-    }
+    dragStart.current = { x: e.clientX, y: e.clientY, cardX: card.x, cardY: card.y }
   }
 
   function handleDragMove(e) {
@@ -129,21 +107,14 @@ export default function Dashboard() {
     })
   }
 
-  function handleDragEnd() {
-    setDraggingId(null)
-  }
+  function handleDragEnd() { setDraggingId(null) }
 
   function handleResizeStart(e, card) {
     if (!editMode) return
     e.preventDefault()
     e.stopPropagation()
     setResizingId(card.id)
-    resizeStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      width: card.width,
-      height: card.height,
-    }
+    resizeStart.current = { x: e.clientX, y: e.clientY, width: card.width, height: card.height }
   }
 
   function handleResizeMove(e) {
@@ -151,22 +122,22 @@ export default function Dashboard() {
     const dx = e.clientX - resizeStart.current.x
     const dy = e.clientY - resizeStart.current.y
     updateCard(resizingId, {
-      width: Math.max(250, resizeStart.current.width + dx),
+      width:  Math.max(250, resizeStart.current.width  + dx),
       height: Math.max(200, resizeStart.current.height + dy),
     })
   }
 
-  function handleResizeEnd() {
-    setResizingId(null)
-  }
+  function handleResizeEnd() { setResizingId(null) }
 
   useEffect(() => {
     if (draggingId || resizingId) {
-      window.addEventListener('mousemove', draggingId ? handleDragMove : handleResizeMove)
-      window.addEventListener('mouseup', draggingId ? handleDragEnd : handleResizeEnd)
+      const moveHandler = draggingId ? handleDragMove : handleResizeMove
+      const endHandler  = draggingId ? handleDragEnd  : handleResizeEnd
+      window.addEventListener('mousemove', moveHandler)
+      window.addEventListener('mouseup',   endHandler)
       return () => {
-        window.removeEventListener('mousemove', draggingId ? handleDragMove : handleResizeMove)
-        window.removeEventListener('mouseup', draggingId ? handleDragEnd : handleResizeEnd)
+        window.removeEventListener('mousemove', moveHandler)
+        window.removeEventListener('mouseup',   endHandler)
       }
     }
   }, [draggingId, resizingId])
