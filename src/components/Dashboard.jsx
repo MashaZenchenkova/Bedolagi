@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import './Dashboard.css'
+import MapPanel2D from './MapPanel2D'
+import MapPanel3D from './MapPanel3D'
 
-// Типы карточек которые можно добавить
 const CARD_TYPES = [
   { type: 'button',  label: 'Кнопка',        icon: '⚡' },
   { type: 'toggle',  label: 'Переключатель',  icon: '🔘' },
-  { type: 'slider',  label: 'Слайдер',        icon: '🎚' },
+  { type: 'slider',  label: 'Слайдер',        icon: '🎚️' },
   { type: 'value',   label: 'Значение',       icon: '📊' },
   { type: 'input',   label: 'Поле ввода',     icon: '✏️' },
+  { type: 'lidar2d', label: 'Карта 2D',       icon: '🗺️' },
+  { type: 'lidar3d', label: 'Карта 3D',       icon: '🌐' },
 ]
 
 function CardButton({ card }) {
@@ -41,7 +44,7 @@ function CardSlider({ card }) {
   const [val, setVal] = useState(50)
   return (
     <div className="card-inner">
-      <div className="card-icon">🎚</div>
+      <div className="card-icon">🎚️</div>
       <div className="card-label">{card.label}</div>
       <div className="card-value">{val}</div>
       <input type="range" min={0} max={100} value={val}
@@ -55,7 +58,9 @@ function CardValue({ card }) {
     <div className="card-inner">
       <div className="card-icon">📊</div>
       <div className="card-label">{card.label}</div>
-      <div className="card-big-value">{card.unit ? `${card.value} ${card.unit}` : card.value ?? '—'}</div>
+      <div className="card-big-value">
+        {card.unit ? `${card.value} ${card.unit}` : card.value ?? '—'}
+      </div>
     </div>
   )
 }
@@ -66,26 +71,50 @@ function CardInput({ card }) {
     <div className="card-inner">
       <div className="card-icon">✏️</div>
       <div className="card-label">{card.label}</div>
-      <input className="card-text-input" type="number"
-        value={val} onChange={e => setVal(e.target.value)}
-        placeholder="Значение" />
+      <input
+        className="card-text-input"
+        type="number"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        placeholder="Значение"
+      />
       <button className="card-action-btn">Отправить</button>
+    </div>
+  )
+}
+
+function CardLidar2D({ card }) {
+  return (
+    <div className="card-inner card-lidar">
+      <div className="card-label">{card.label}</div>
+      <MapPanel2D scale={0.058} />
+    </div>
+  )
+}
+
+function CardLidar3D({ card }) {
+  return (
+    <div className="card-inner card-lidar">
+      <div className="card-label">{card.label}</div>
+      <MapPanel3D scale={0.058} />
     </div>
   )
 }
 
 function Card({ card, editMode, onRemove }) {
   const components = {
-    button: CardButton,
-    toggle: CardToggle,
-    slider: CardSlider,
-    value:  CardValue,
-    input:  CardInput,
+    button:  CardButton,
+    toggle:  CardToggle,
+    slider:  CardSlider,
+    value:   CardValue,
+    input:   CardInput,
+    lidar2d: CardLidar2D,
+    lidar3d: CardLidar3D,
   }
   const Inner = components[card.type] ?? CardValue
 
   return (
-    <div className={`card ${editMode ? 'card-edit' : ''}`}>
+    <div className={`card ${editMode ? 'card-edit' : ''} ${card.type === 'lidar2d' || card.type === 'lidar3d' ? 'card-wide' : ''}`}>
       {editMode && (
         <button className="card-remove" onClick={() => onRemove(card.id)}>✕</button>
       )}
@@ -96,7 +125,7 @@ function Card({ card, editMode, onRemove }) {
 
 function AddCardModal({ onAdd, onClose }) {
   const [label, setLabel] = useState('')
-  const [type, setType]   = useState('button')
+  const [type, setType] = useState('button')
 
   function handleAdd() {
     if (!label.trim()) return

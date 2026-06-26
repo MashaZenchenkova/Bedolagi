@@ -209,7 +209,23 @@ input[type="range"] { width: 100%; accent-color: #00b36f; }
   justify-content: center;
   z-index: 100;
 }
+.card-lidar {
+  height: 100%;
+}
 
+.card-lidar canvas {
+  width: 100%;
+  flex: 1;
+  min-height: 300px;
+  background: #050608;
+  border: 1px solid #303744;
+  border-radius: 10px;
+}
+
+/* Карточки лидара занимают 2 колонки */
+.card:has(.card-lidar) {
+  grid-column: span 2;
+}
 .modal {
   background: #151922;
   border: 1px solid #2a2f3a;
