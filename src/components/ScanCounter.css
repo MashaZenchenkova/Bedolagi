@@ -1,0 +1,81 @@
+.scan-counter-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 10px;
+}
+
+.scan-counter-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+}
+
+.scan-counter-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.my-button,
+.my-button2 {
+  padding: 8px 18px;
+  background: #0a2318;
+  color: #00ff99;
+  border: 1px solid #00b36f;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.my-button:hover,
+.my-button2:hover {
+  background: #0f3428;
+  transform: translateY(-1px);
+}
+
+.my-button:active,
+.my-button2:active {
+  transform: scale(0.97);
+}
+.scan-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0a2318;
+  border: 1px solid #00b36f;
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+.scan-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8d96a8;
+}
+
+.scan-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ff99;
+  min-width: 40px;
+  text-align: center;
+}
+@media (max-width: 280px) {
+  .scan-counter-buttons {
+    flex-direction: column;
+  }
+  
+  .my-button,
+  .my-button2 {
+    width: 100%;
+    text-align: center;
+  }
+}
