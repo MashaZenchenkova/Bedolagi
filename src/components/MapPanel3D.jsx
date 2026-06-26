@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import './MapPanel3D.css'
 
 const DEMO_POINTS = []
 for (let a = 0; a < 360; a += 1.5) {
@@ -7,14 +8,50 @@ for (let a = 0; a < 360; a += 1.5) {
   DEMO_POINTS.push({ x: Math.cos(rad) * d, y: Math.sin(rad) * d, distance: d })
 }
 
-function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
+const MAX_RADIUS = 2400
+const PADDING = 30
+const MIN_SCALE = 0.02
+const MAX_SCALE = 0.15
+
+function MapPanel3D({ points = DEMO_POINTS }) {
   const canvasRef = useRef(null)
   const rotRef = useRef({ yaw: 0.6, pitch: 0.5 })
   const dragRef = useRef(null)
+  const panDragRef = useRef(null)
+  const [size, setSize] = useState({ width: 0, height: 0 })
+  const [scale, setScale] = useState(0.058)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
-    draw()
-  }, [points, scale])
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        setSize({ width, height })
+      }
+    })
+
+    observer.observe(canvas)
+    return () => observer.disconnect()
+  }, [])
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const handleWheel = (e) => {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? 0.9 : 1.1
+      setScale(prevScale => {
+        const newScale = prevScale * delta
+        return Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale))
+      })
+    }
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false })
+    return () => canvas.removeEventListener('wheel', handleWheel)
+  }, [])
 
   function project(x, y, z) {
     const { yaw, pitch } = rotRef.current
@@ -29,17 +66,17 @@ function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
 
   function draw() {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || size.width === 0) return
     const ctx = canvas.getContext('2d')
     const W = canvas.offsetWidth
     const H = canvas.offsetHeight
     canvas.width = W
     canvas.height = H
-    const cx = W / 2, cy = H / 2
+    const cx = W / 2 + pan.x
+    const cy = H / 2 + pan.y
 
     ctx.clearRect(0, 0, W, H)
 
-    // сетка
     ctx.strokeStyle = '#111820'
     ctx.lineWidth = 1
     for (let g = -800; g <= 800; g += 60) {
@@ -49,7 +86,6 @@ function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
       ctx.beginPath(); ctx.moveTo(cx + p3.x, cy - p3.y); ctx.lineTo(cx + p4.x, cy - p4.y); ctx.stroke()
     }
 
-    // оси X Y Z
     ;[
       { to: project(250, 0, 0),  color: '#ff5566' },
       { to: project(0, 250, 0),  color: '#55ff88' },
@@ -59,13 +95,11 @@ function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + a.to.x, cy - a.to.y); ctx.stroke()
     })
 
-    // точки лидара (Z=0, как в 2D)
     if (points.length > 0) {
       const projected = points.map(p => {
         const pr = project(p.x * scale, p.y * scale, 0)
         return { sx: cx + pr.x, sy: cy - pr.y, depth: pr.depth, dist: p.distance }
       })
-      // дальние рисуем первыми
       projected.sort((a, b) => a.depth - b.depth)
       const maxD = Math.max(...points.map(p => p.distance))
       projected.forEach(p => {
@@ -76,7 +110,6 @@ function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
       })
     }
 
-    // робот
     const segs = 28
     ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3
     ctx.beginPath()
@@ -89,28 +122,50 @@ function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
     const c0 = project(0, 0, 0)
     ctx.fillStyle = '#ffcc00'
     ctx.beginPath(); ctx.arc(cx + c0.x, cy - c0.y, 4, 0, Math.PI * 2); ctx.fill()
-    // мачта вверх по Z
     const mast = project(0, 0, 80)
     ctx.beginPath(); ctx.moveTo(cx + c0.x, cy - c0.y); ctx.lineTo(cx + mast.x, cy - mast.y); ctx.stroke()
   }
 
-  function onMouseDown(e) { dragRef.current = { x: e.clientX, y: e.clientY } }
-
-  function onMouseMove(e) {
-    if (!dragRef.current) return
-    rotRef.current.yaw   += (e.clientX - dragRef.current.x) * 0.01
-    rotRef.current.pitch -= (e.clientY - dragRef.current.y) * 0.01
-    rotRef.current.pitch = Math.max(-1.4, Math.min(1.4, rotRef.current.pitch))
-    dragRef.current = { x: e.clientX, y: e.clientY }
+  useEffect(() => {
     draw()
+  }, [points, scale, size, pan])
+  function onMouseDown(e) {
+    if (e.button === 0) {
+      dragRef.current = { x: e.clientX, y: e.clientY }
+    } else if (e.button === 2) {
+      panDragRef.current = { x: e.clientX, y: e.clientY }
+    }
   }
 
-  function onMouseUp() { dragRef.current = null }
+  function onMouseMove(e) {
+    if (dragRef.current) {
+      rotRef.current.yaw   += (e.clientX - dragRef.current.x) * 0.01
+      rotRef.current.pitch -= (e.clientY - dragRef.current.y) * 0.01
+      rotRef.current.pitch = Math.max(-1.4, Math.min(1.4, rotRef.current.pitch))
+      dragRef.current = { x: e.clientX, y: e.clientY }
+      draw()
+    }
+    if (panDragRef.current) {
+      const dx = e.clientX - panDragRef.current.x
+      const dy = e.clientY - panDragRef.current.y
+      setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }))
+      panDragRef.current = { x: e.clientX, y: e.clientY }
+    }
+  }
+
+  function onMouseUp(e) {
+    if (e.button === 0) dragRef.current = null
+    if (e.button === 2) panDragRef.current = null
+  }
+
+  function onContextMenu(e) {
+    e.preventDefault()
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ fontSize: 13, color: '#8d96a8', marginBottom: 8 }}>
-        3D карта · точек: {points.length} · тяните для поворота
+        3D карта · точек: {points.length} · ЛКМ: вращение, ПКМ: перемещение, колесико: масштаб
       </div>
       <canvas
         ref={canvasRef}
@@ -118,6 +173,7 @@ function MapPanel3D({ points = DEMO_POINTS, scale = 0.058 }) {
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
+        onContextMenu={onContextMenu}
         style={{
           flex: 1, width: '100%',
           background: '#050608',

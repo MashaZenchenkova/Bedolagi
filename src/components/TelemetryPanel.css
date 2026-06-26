@@ -1,0 +1,82 @@
+.telemetry-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.telemetry-title {
+  color: #8d96a8;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.telemetry-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+}
+
+.telemetry-card {
+  background: #0a0d12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.telemetry-label {
+  color: #5a6478;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.telemetry-value {
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.telemetry-unit {
+  color: #5a6478;
+  font-weight: 400;
+}
+
+.telemetry-bar-bg {
+  background: #1a1f2a;
+  width: 100%;
+  overflow: hidden;
+}
+
+.telemetry-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.telemetry-chart {
+  background: #0a0d12;
+  flex-shrink: 0;
+}
+
+.telemetry-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.telemetry-chart-bar {
+  flex: 1;
+  background: linear-gradient(to top, #00ff99, #00ccff);
+  min-width: 2px;
+  transition: height 0.3s ease;
+}
