@@ -48,13 +48,9 @@ function ScanCounter() {
     observer.observe(container)
     return () => observer.disconnect()
   }, [])
-  const baseWidth = 300
-  const baseHeight = 200
-  const scale = Math.min(size.width / baseWidth, size.height / baseHeight, 1.5)
-  const fontSize = Math.max(10, 13 * scale)
-  const buttonPadding = `${Math.max(6, 8 * scale)}px ${Math.max(14, 18 * scale)}px`
+
+  const scale = Math.min(size.width / 300, size.height / 200, 1.5)
   const gap = Math.max(8, 12 * scale)
-  const borderRadius = Math.max(6, 8 * scale)
 
   function handlePrevious() {
     setScanNumber(prev => Math.max(0, prev - 1))
@@ -67,7 +63,7 @@ function ScanCounter() {
   return (
     <div ref={containerRef} className="scan-counter-container">
       <div className="scan-counter-content" style={{ gap: gap }}>
-        <div className="scan-counter-buttons" style={{ gap: gap }}>
+        <div className="scan-counter-buttons">
           <Button onClick={handlePrevious} />
           <Button2 onClick={handleNext} />
         </div>
